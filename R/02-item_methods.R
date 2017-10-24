@@ -6,13 +6,13 @@ Experimental_itemtypes <- function() c('experimental', 'grsmIRT')
 
 Valid_iteminputs <- function() c('Rasch', '2PL', '3PL', '3PLu', '4PL', 'graded', 'grsm', 'gpcm', 'gpcmIRT',
                                  'rsm', 'nominal', 'PC2PL','PC3PL', '2PLNRM', '3PLNRM', '3PLuNRM', '4PLNRM',
-                                 'ideal', 'lca', 'spline', Experimental_itemtypes())
+                                 'ideal', 'lca', 'spline','ggum', Experimental_itemtypes())
 
 # Indicate which functions should use the R function instead of those written in C++
-Use_R_ProbTrace <- function() c('custom', 'spline', Experimental_itemtypes())
+Use_R_ProbTrace <- function() c('custom', 'spline','ggum', Experimental_itemtypes())
 
 Use_R_Deriv <- function() c('custom', 'rating', 'partcomp', 'nestlogit',
-                            'spline', Experimental_itemtypes())
+                            'spline','ggum', Experimental_itemtypes())
 
 # ----------------------------------------------------------------
 # helper functions
@@ -2147,6 +2147,159 @@ setMethod(
             }
         }
         dp
+    }
+)
+
+# ----------------------------------------------------------------
+
+setClass("ggum", contains = 'AllItemsClass',
+         representation = representation())
+
+setMethod(
+    f = "print",
+    signature = signature(x = 'ggum'),
+    definition = function(x, ...){
+        cat('Item object of class:', class(x))
+    }
+)
+
+setMethod(
+    f = "show",
+    signature = signature(object = 'ggum'),
+    definition = function(object){
+        print(object)
+    }
+)
+
+#extract the slopes (should be a vector of length nfact)
+setMethod(
+    f = "ExtractLambdas",
+    signature = signature(x = 'ggum'),
+    definition = function(x){
+        x@par[1L:x@nfact] #slopes
+    }
+)
+
+#extract the intercepts
+setMethod(
+    f = "ExtractZetas",
+    signature = signature(x = 'ggum'),
+    definition = function(x){
+        x@par[(x@nfact+1):length(x@par)] #intercepts
+    }
+)
+
+# generating random starting values (only called when, e.g., mirt(..., GenRandomPars = TRUE))
+setMethod(
+    f = "GenRandomPars",
+    signature = signature(x = 'ggum'),
+    definition = function(x){
+        par <- c(rlnorm(1, .2, .2), rnorm(1))
+        x@par[x@est] <- par[x@est]
+        x
+    }
+)
+
+# how to set the null model to compute statistics like CFI and TLI (usually just fixing slopes to 0)
+setMethod(
+    f = "set_null_model",
+    signature = signature(x = 'ggum'),
+    definition = function(x){
+        x@par[1L:x@nfact] <- 0
+        x@est[1L:x@nfact] <- FALSE
+        x
+    }
+)
+
+# probability trace line function. Must return a matrix with a trace line for each category
+setMethod(
+    f = "ProbTrace",
+    signature = signature(x = 'ggum', Theta = 'matrix'),
+    definition = function(x, Theta){
+        return(P.ggum(x@par, Theta=Theta, correct=x@correctcat, ncat=x@ncat))
+    }
+)
+
+P.ggum <- function(par, Theta, correct, ncat)
+{
+    C <- ncat - 1
+    D <- (length(par)-C)/2
+    M <- 2*C + 1
+
+    sumtau <- 0
+    sumdist<-0
+    num <- matrix(nrow=nrow(Theta),ncol=(C+1))
+    P <- matrix(nrow=nrow(Theta),ncol=(C+1))
+
+    for (d in 1:D) {
+        dist <- (par[d]**2)*((Theta[,d] - par[(D+d)])**2)
+        sumdist <- dist+sumdist
+    }
+    dist<-sqrt(sumdist)
+
+    for (w in 0:C) {
+
+        x1 <- w*dist
+        x2 <- (M-w)*dist
+
+        if (w>0) {
+            for (d in 1:D) {
+                tau <- (par[d]*par[(w+2*D)])
+                sumtau <- tau + sumtau
+            }
+        }
+
+        num1 <- exp(x1 + sumtau)
+        num2 <- exp(x2 + sumtau)
+
+        num[,(w+1)] <- num1 + num2
+
+    }
+
+    numtot <- apply(num, 1, sum)
+
+    for (k in 1:(C+1)) {
+        P[,k] <- num[,k]/numtot
+    }
+
+    P <- ifelse(P < 1e-20, 1e-20, P)
+    P <- ifelse(P > (1 - 1e-20), (1 - 1e-20), P)
+
+    return(P)
+}
+
+# complete-data derivative used in parameter estimation (here it is done numerically)
+setMethod(
+    f = "Deriv",
+    signature = signature(x = 'ggum', Theta = 'matrix'),
+    definition = function(x, Theta, estHess = FALSE, offterm = numeric(1L)){
+        grad <- rep(0, length(x@par))
+        hess <- matrix(0, length(x@par), length(x@par))
+        grad[x@est] <- numDeriv::grad(EML, x@par[x@est], obj=x, Theta=Theta)
+        if(estHess){
+            hess[x@est, x@est] <- numDeriv::hessian(EML, x@par[x@est], obj=x,
+                                                    Theta=Theta)
+        }
+        return(list(grad=grad, hess=hess)) # TODO replace with analytical derivatives
+
+    }
+)
+
+# derivative of the model wft to the Theta values (done numerically here)
+setMethod(
+    f = "DerivTheta",
+    signature = signature(x = 'ggum', Theta = 'matrix'),
+    definition = function(x, Theta){
+        numDeriv_DerivTheta(x, Theta) #replace with analytical derivatives
+    }
+)
+
+# derivative of the probability trace line function wrt Theta (done numerically here)
+setMethod(
+    f = "dP",
+    signature = signature(x = 'ggum', Theta = 'matrix'),
+    definition = function(x, Theta){
+        numDeriv_dP(x, Theta) #replace with analytical derivatives
     }
 )
 
