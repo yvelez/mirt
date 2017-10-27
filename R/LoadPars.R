@@ -138,6 +138,15 @@ LoadPars <- function(itemtype, itemloc, lambdas, zetas, guess, upper, fulldata, 
                 names(val) <- paste('a', 1L:length(val), sep='')
             }
             val[!fp] <- 0
+        } else if (itemtype[i] == 'ggum'){
+            val <- numeric(2*nfact+(max(K)-1))
+            fp <- c(rep(TRUE,length(val)))
+            names(val) <- c(paste('a', 1L:nfact, sep=''), paste('d', 1L:nfact, sep=''),
+                paste('t', 1:(max(K) - 1), sep=''))
+            if(all(itemtype[i] != valid.items) || itemtype[i] %in% Experimental_itemtypes()) next
+            names(fp) <- names(val)
+            startvalues[[i]] <- val
+            freepars[[i]] <- fp
         } else if (itemtype[i] == 'spline') next
         if(all(itemtype[i] != valid.items) || itemtype[i] %in% Experimental_itemtypes()) next
         names(fp) <- names(val)
@@ -470,6 +479,28 @@ LoadPars <- function(itemtype, itemloc, lambdas, zetas, guess, upper, fulldata, 
             tmp2 <- parnumber:(parnumber + length(p) - 1L)
             pars[[i]]@parnum <- tmp2
             parnumber <- parnumber + length(p)
+            next
+        }
+
+        if(itemtype[i] == 'ggum'){
+            #PLACEHOLDER check that these inputs are fine (lbound, ubound, etc)
+            pars[[i]] <- new('ggum',
+                             par=startvalues[[i]],
+                             est=freepars[[i]],
+                             nfact=nfact,
+                             ncat=max(K),
+                             nfixedeffects=nfixedeffects,
+                             any.prior=FALSE,
+                             itemclass=11L,
+                             prior.type=rep(0L, length(startvalues[[i]])),
+                             fixed.design=fixed.design.list[[i]],
+                             lbound=rep(-Inf, length(startvalues[[i]])),
+                             ubound=c(rep(Inf, length(startvalues[[i]]))),
+                             prior_1=rep(NaN,length(startvalues[[i]])),
+                             prior_2=rep(NaN,length(startvalues[[i]])))
+            tmp2 <- parnumber:(parnumber + length(freepars[[i]]) - 1L)
+            pars[[i]]@parnum <- tmp2
+            parnumber <- parnumber + length(freepars[[i]])
             next
         }
 
