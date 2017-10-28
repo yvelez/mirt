@@ -2194,7 +2194,7 @@ setMethod(
     f = "GenRandomPars",
     signature = signature(x = 'ggum'),
     definition = function(x){
-        par <- c(rlnorm(1, .2, .2), rnorm(1))
+        par <- c(rlnorm(1, .2, .2), rnorm(1)) #FIXME this doesn't look correct
         x@par[x@est] <- par[x@est]
         x
     }
@@ -2220,6 +2220,7 @@ setMethod(
     }
 )
 
+# TODO write this with Rcpp
 P.ggum <- function(par, Theta, correct, ncat)
 {
     C <- ncat - 1
@@ -2275,10 +2276,11 @@ setMethod(
     definition = function(x, Theta, estHess = FALSE, offterm = numeric(1L)){
         grad <- rep(0, length(x@par))
         hess <- matrix(0, length(x@par), length(x@par))
-        grad[x@est] <- numDeriv::grad(EML, x@par[x@est], obj=x, Theta=Theta)
+        grad[x@est] <- numerical_deriv(EML, x@par[x@est], obj=x, Theta=Theta,
+                                       type='Richardson')
         if(estHess){
-            hess[x@est, x@est] <- numDeriv::hessian(EML, x@par[x@est], obj=x,
-                                                    Theta=Theta)
+            hess[x@est, x@est] <- numerical_deriv(EML, x@par[x@est], obj=x, Theta=Theta,
+                                                  gradient=FALSE, type='Richardson')
         }
         return(list(grad=grad, hess=hess)) # TODO replace with analytical derivatives
 
