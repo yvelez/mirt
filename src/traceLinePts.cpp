@@ -400,6 +400,15 @@ void P_ideal(vector<double> &P, const vector<double> &par, const NumericMatrix &
     }
 }
 
+
+// TODO
+// void P_ggum(vector<double> &P, const vector<double> &par,
+//     const NumericMatrix &Theta, const NumericVector &ot, const int &N,
+//     const int &nfact, const int &ncat)
+// {
+
+// }
+
 RcppExport SEXP traceLinePts(SEXP Rpar, SEXP RTheta, SEXP Rot)
 {
     BEGIN_RCPP
@@ -602,6 +611,7 @@ void _computeItemTrace(vector<double> &itemtrace, const NumericMatrix &Theta,
         8 = nestlogit
         9 = custom....have to do in R for now
         10 = lca
+        11 = ggum
     */
 
     if(USEFIXED){
@@ -647,6 +657,9 @@ void _computeItemTrace(vector<double> &itemtrace, const NumericMatrix &Theta,
         case 10 :
             P_lca(P, par, theta, N, ncat, nfact2, 0);
             break;
+        // TODO
+        // case 11 : 
+        // 	P_ggum(...);
         default :
             P_switch(P, par, theta, ot, N, ncat, nfact, itemclass);
     }

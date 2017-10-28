@@ -139,11 +139,10 @@ LoadPars <- function(itemtype, itemloc, lambdas, zetas, guess, upper, fulldata, 
             }
             val[!fp] <- 0
         } else if (itemtype[i] == 'ggum'){
-            val <- numeric(2*nfact+(max(K)-1))
+            val <- c(rep(1, nfact), rep(0, 2*nfact+(max(K)-1) - nfact))
             fp <- c(rep(TRUE,length(val)))
             names(val) <- c(paste('a', 1L:nfact, sep=''), paste('d', 1L:nfact, sep=''),
                 paste('t', 1:(max(K) - 1), sep=''))
-            if(all(itemtype[i] != valid.items) || itemtype[i] %in% Experimental_itemtypes()) next
             names(fp) <- names(val)
             startvalues[[i]] <- val
             freepars[[i]] <- fp

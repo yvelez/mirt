@@ -1646,6 +1646,10 @@ static void _computeDpars(vector<double> &grad, NumericMatrix &hess, const List 
             case 10 :
                 d_lca(tmpgrad, tmphess, par, theta, offterm(_,i), dat, N, nfact2, estHess);
                 break;
+            //TODO
+            // case 11 :
+            //     d_ggum(tmpgrad, tmphess, par, theta, offterm(_,i), dat, N, nfact2, estHess);
+            //     break;    
             default :
             	d_numerical(tmpgrad, tmphess, par, theta, offterm(_,i), dat, N, nfact2, ncat, estHess, itemclass);
                 break;
