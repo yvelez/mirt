@@ -641,6 +641,10 @@ void P_switch(vector<double> &P, const vector<double> &par,
             break;
         case 9 :
             P_ideal(P, par, theta, ot, N, nfact2);
+            break;
+        case 11 :
+            P_ggum(P, par, theta, N, nfact2, ncat);
+            break;
     }
 }
 

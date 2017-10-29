@@ -11,7 +11,7 @@ Valid_iteminputs <- function() c('Rasch', '2PL', '3PL', '3PLu', '4PL', 'graded',
 Use_R_ProbTrace <- function() c('custom', 'spline', Experimental_itemtypes())
 
 Use_R_Deriv <- function() c('custom', 'rating', 'partcomp', 'nestlogit',
-                            'spline','ggum', Experimental_itemtypes())
+                            'spline', Experimental_itemtypes())
 
 # ----------------------------------------------------------------
 # helper functions
