@@ -24,7 +24,8 @@
 #'   If the internal class of the object is specified instead, the inputs can
 #'   be \code{'dich', 'graded', 'gpcm','nominal', 'nestlogit', 'partcomp', 'gumm'}, or \code{'lca'}, for
 #'   dichotomous, graded, generalized partial credit, nominal, nested logit, partially compensatory,
-#'   and latent class analysis model. Note that for the gpcm, nominal, and nested logit models there should
+#'   generalized graded unfolding model, and latent class analysis model.
+#'   Note that for the gpcm, nominal, and nested logit models there should
 #'   be as many parameters as desired categories, however to parametrized them for meaningful
 #'   interpretation the first category intercept should
 #'   equal 0 for these models (second column for \code{'nestlogit'}, since first column is for the
@@ -36,8 +37,8 @@
 #'   in locations where not applicable. Note that during estimation the first slope will be
 #'   constrained to 0 and the last will be constrained to the number of categories minus 1,
 #'   so it is best to set these as the values for the first and last categories as well
-#' @param t matrix of t-values for the 'ggum', where each row corresponds to a given item. Determines
-#'   the number of categories, where \code{NA} can be used for non-applicable categores
+#' @param t matrix of t-values for the 'ggum' itemtype, where each row corresponds to a given item.
+#'   Also determines the number of categories, where \code{NA} can be used for non-applicable categories
 #' @param N sample size
 #' @param guess a vector of guessing parameters for each item; only applicable
 #'   for dichotomous items. Must be either a scalar value that will affect all of
