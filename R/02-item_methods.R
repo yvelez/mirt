@@ -1,4 +1,3 @@
-# ----------------------------------------------------------------
 # valid itemtype inputs
 
 # flag to indicate an experimental item type (requires an S4 initializer in the definitions below)
@@ -9,7 +8,7 @@ Valid_iteminputs <- function() c('Rasch', '2PL', '3PL', '3PLu', '4PL', 'graded',
                                  'ideal', 'lca', 'spline','ggum', Experimental_itemtypes())
 
 # Indicate which functions should use the R function instead of those written in C++
-Use_R_ProbTrace <- function() c('custom', 'spline','ggum', Experimental_itemtypes())
+Use_R_ProbTrace <- function() c('custom', 'spline', Experimental_itemtypes())
 
 Use_R_Deriv <- function() c('custom', 'rating', 'partcomp', 'nestlogit',
                             'spline','ggum', Experimental_itemtypes())
@@ -2216,57 +2215,69 @@ setMethod(
     f = "ProbTrace",
     signature = signature(x = 'ggum', Theta = 'matrix'),
     definition = function(x, Theta){
-        return(P.ggum(x@par, Theta=Theta, correct=x@correctcat, ncat=x@ncat))
+        return(P.ggum(x@par, Theta=Theta, ncat=x@ncat))
     }
 )
 
 # TODO write this with Rcpp
-P.ggum <- function(par, Theta, correct, ncat)
+P.ggum <- function(par, Theta, ncat)
 {
-    C <- ncat - 1
-    D <- (length(par)-C)/2
-    M <- 2*C + 1
+    # C <- ncat - 1
+    # D <- (length(par)-C)/2
+    # M <- 2*C + 1
+    #
+    # sumtau <- 0
+    # sumdist<-0
+    # num <- matrix(nrow=nrow(Theta),ncol=(C+1))
+    # P <- matrix(nrow=nrow(Theta),ncol=(C+1))
+    #
+    # for (d in 1:D) {
+    #     dist <- (par[d]**2)*((Theta[,d] - par[(D+d)])**2)
+    #     sumdist <- dist+sumdist
+    # }
+    # dist<-sqrt(sumdist)
+    # z1 <- z2 <- num
+    #
+    # for (w in 0:C) {
+    #
+    #     x1 <- w*dist
+    #     x2 <- (M-w)*dist
+    #
+    #     if (w>0) {
+    #         for (d in 1:D) {
+    #             tau <- (par[d]*par[(w+2*D)])
+    #             sumtau <- tau + sumtau
+    #         }
+    #     }
+    #
+    #     z1[,w + 1] <- x1 + sumtau
+    #     z2[,w + 1] <- x2 + sumtau
+    #
+    #     # num1 <- exp(x1 + sumtau)
+    #     # num2 <- exp(x2 + sumtau)
+    #     #
+    #     # num[,(w+1)] <- num1 + num2
+    #
+    # }
+    #
+    # # numtot <- apply(num, 1, sum)
+    # #
+    # # for (k in 1:(C+1)) {
+    # #     P[,k] <- num[,k]/numtot
+    # # }
+    #
+    # # less overflow this way
+    # maxz1 <- apply(z1, 1, max)
+    # maxz2 <- apply(z2, 1, max)
+    # maxz <- pmax(maxz1, maxz2)
+    # num2 <- exp(z1 - maxz) + exp(z2 - maxz)
+    # den <- rowSums(num2)
+    # P <- num2/den
+    # P <- ifelse(P < 1e-20, 1e-20, P)
+    # P <- ifelse(P > (1 - 1e-20), (1 - 1e-20), P)
+    # return(P)
 
-    sumtau <- 0
-    sumdist<-0
-    num <- matrix(nrow=nrow(Theta),ncol=(C+1))
-    P <- matrix(nrow=nrow(Theta),ncol=(C+1))
-
-    for (d in 1:D) {
-        dist <- (par[d]**2)*((Theta[,d] - par[(D+d)])**2)
-        sumdist <- dist+sumdist
-    }
-    dist<-sqrt(sumdist)
-
-    for (w in 0:C) {
-
-        x1 <- w*dist
-        x2 <- (M-w)*dist
-
-        if (w>0) {
-            for (d in 1:D) {
-                tau <- (par[d]*par[(w+2*D)])
-                sumtau <- tau + sumtau
-            }
-        }
-
-        num1 <- exp(x1 + sumtau)
-        num2 <- exp(x2 + sumtau)
-
-        num[,(w+1)] <- num1 + num2
-
-    }
-
-    numtot <- apply(num, 1, sum)
-
-    for (k in 1:(C+1)) {
-        P[,k] <- num[,k]/numtot
-    }
-
-    P <- ifelse(P < 1e-20, 1e-20, P)
-    P <- ifelse(P > (1 - 1e-20), (1 - 1e-20), P)
-
-    return(P)
+    return(.Call("ggumTraceLinePts", par, Theta, ncat))
 }
 
 # complete-data derivative used in parameter estimation (here it is done numerically)
