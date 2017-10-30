@@ -176,7 +176,7 @@ LoadPars <- function(itemtype, itemloc, lambdas, zetas, guess, upper, fulldata, 
             val <- ggum.start.values[[i]]
             fp <- c(rep(TRUE,length(val)))
             names(val) <- c(paste('a', 1L:nfact, sep=''), paste('d', 1L:nfact, sep=''),
-                paste('t', 1:(max(K) - 1), sep=''))
+                paste('t', 1L:(max(K[i]) - 1), sep=''))
             names(fp) <- names(val)
             startvalues[[i]] <- val
             freepars[[i]] <- fp
