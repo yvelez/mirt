@@ -7,3 +7,5 @@ src-i386/
 src-x64/
 .Rhistory
 mirt_pulling.Rproj
+.RData
+.RData

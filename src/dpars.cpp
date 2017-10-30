@@ -692,9 +692,9 @@ static inline double _richardson(vector<double> &grad, NumericMatrix &hess,
     const NumericMatrix &dat, const NumericVector &ot, const int &N, const int &nfact, 
     const int &ncat, const int &itemclass, const bool gradient)
 {
-    double delta = .1;
     const int rr = 4;
     if(gradient){
+        double delta = .0001;
         const int npar = par.size();
         NumericMatrix R0(npar, rr);
         NumericMatrix R1(npar, rr);
@@ -715,6 +715,7 @@ static inline double _richardson(vector<double> &grad, NumericMatrix &hess,
         } 
         for(int i = 0; i < npar; ++i) grad[i] = R1(i, rr - 1);
     } else {
+        double delta = .01;
         const int npar = par.size() * par.size();
         const int nrow = hess.nrow();
         vector<double> dvec(npar);
@@ -759,12 +760,14 @@ static void d_numerical(vector<double> &grad, NumericMatrix &hess, const vector<
 	const NumericMatrix &theta, const NumericVector &ot, const NumericMatrix &dat, 
 	const int &N, const int &nfact, const int &ncat, const int &estHess, const int &itemclass)
 {
-	const int supported[] = {6, 9, 10}; // supported item class #
+	const int supported[] = {6, 9, 10, 11}; // supported item class #
 	bool run = false;
-	for(int i = 0; i < 3; ++i) // length of supported
+	for(int i = 0; i < 4; ++i) // length of supported
 		if(supported[i] == itemclass) run = true;
 	if(!run) return;
 
+    // double delta = 1e-8;
+    // _central(grad, hess, par, theta, dat, ot, N, nfact, ncat, itemclass, true, delta);
     _richardson(grad, hess, par, theta, dat, ot, N, nfact, ncat, itemclass, true);
     if(estHess)
         _richardson(grad, hess, par, theta, dat, ot, N, nfact, ncat, itemclass, false);
@@ -1550,6 +1553,36 @@ RcppExport SEXP dparsDich(SEXP Rx, SEXP RTheta, SEXP RestHess, SEXP Rdat, SEXP R
 	END_RCPP
 }
 
+// TODO
+// void d_ggum(vector<double> &grad, NumericMatrix &hess, const vector<double> &par,
+//     const NumericMatrix &Theta, const NumericVector &ot, const NumericMatrix &dat,
+//     const int &N, const int &nfact, const int &ncat, const int &estHess)
+// {
+
+// }
+
+// RcppExport SEXP dparsGGUM(SEXP Rx, SEXP RTheta, SEXP RestHess, SEXP Rdat)
+// {
+//     BEGIN_RCPP
+
+
+//     const vector<double> par = as< vector<double> >(Rx);
+//     const NumericMatrix Theta(RTheta);
+//     const NumericMatrix dat(Rdat);
+//     const int estHess = as<int>(RestHess);
+//     const int nfact = Theta.ncol();
+//     const int N = Theta.nrow();
+//     NumericMatrix hess (nfact + 3, nfact + 3);
+//     vector<double> grad (nfact + 3);
+//     d_ggum(tmpgrad, tmphess, par, theta, dat, N, nfact, ncat, estHess);
+//     List ret;
+//     ret["grad"] = wrap(grad);
+//     ret["hess"] = hess;
+//     return(ret);
+    
+//     END_RCPP
+// }
+
 static void d_priors(vector<double> &grad, NumericMatrix &hess, const int &ind,
     const int &prior_type, const double &prior_1, const double &prior_2, const double &par)
 {
@@ -1646,6 +1679,10 @@ static void _computeDpars(vector<double> &grad, NumericMatrix &hess, const List 
             case 10 :
                 d_lca(tmpgrad, tmphess, par, theta, offterm(_,i), dat, N, nfact2, estHess);
                 break;
+            //TODO
+            // case 11 :
+            //     d_ggum(tmpgrad, tmphess, par, theta, dat, N, nfact2, ncat, estHess);
+            //     break;    
             default :
             	d_numerical(tmpgrad, tmphess, par, theta, offterm(_,i), dat, N, nfact2, ncat, estHess, itemclass);
                 break;
