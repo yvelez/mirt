@@ -2184,7 +2184,7 @@ setMethod(
     f = "ExtractZetas",
     signature = signature(x = 'ggum'),
     definition = function(x){
-        x@par[(x@nfact+1):length(x@par)] #intercepts
+        x@par[(x@nfact+1L):length(x@par)] #intercepts
     }
 )
 
@@ -2193,7 +2193,9 @@ setMethod(
     f = "GenRandomPars",
     signature = signature(x = 'ggum'),
     definition = function(x){
-        par <- c(rlnorm(1, .2, .2), rnorm(1)) #FIXME this doesn't look correct
+        par <- c(rlnorm(x@nfact, .2, .2),
+                 rnorm(x@nfact),
+                 sort(rnorm(x@ncat-1L, 0, 1.5), decreasing = TRUE))
         x@par[x@est] <- par[x@est]
         x
     }

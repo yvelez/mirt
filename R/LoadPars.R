@@ -17,6 +17,34 @@ LoadPars <- function(itemtype, itemloc, lambdas, zetas, guess, upper, fulldata, 
     pars <- vector('list', J)
     guess <- logit(guess)
     upper <- logit(upper)
+    ggum.start.values <- vector('list', length(K))
+    if(any(itemtype == 'ggum')){
+        dca <- vegan::decorana(fulldata)
+        tmp <- capture.output(a <- as.list(summary(dca, digits=5, origin=TRUE,
+                             display="species")))
+        data.dca <- as.data.frame(a$spec.scores)
+        dca.mat <- as.matrix(data.dca[,1:nfact])
+
+        for (i in 1L:length(K)) {
+            if(itemtype[i] != 'ggum') next
+
+            dca.dist <- 0
+            tmppar <- numeric(2*nfact + K[i]-1)
+            for (d in 1:nfact) {
+                tmppar[d] <- 1   #alphas
+                tmppar[nfact+d] <- dca.mat[i,d]   #deltas
+                dca.dist <- dca.mat[i,d]^2 + dca.dist
+            }
+
+            for (k in 1:(K[i]-1)) {
+                origin <- 1.002+.449*sqrt(dca.dist) - .093*K[i]
+                delta <- .921+.058*sqrt(dca.dist) - .129*K[i]
+                tmppar[2*nfact+k] <- origin + delta*(K[i]-k) #taus
+            }
+            ggum.start.values[[i]] <- tmppar
+        }
+    }
+
 
     #start values and free parameters
     startvalues <- freepars <- vector('list', J)
@@ -139,7 +167,7 @@ LoadPars <- function(itemtype, itemloc, lambdas, zetas, guess, upper, fulldata, 
             }
             val[!fp] <- 0
         } else if (itemtype[i] == 'ggum'){
-            val <- c(rep(1, nfact), rep(0, 2*nfact+(max(K)-1) - nfact))
+            val <- ggum.start.values[[i]]
             fp <- c(rep(TRUE,length(val)))
             names(val) <- c(paste('a', 1L:nfact, sep=''), paste('d', 1L:nfact, sep=''),
                 paste('t', 1:(max(K) - 1), sep=''))
