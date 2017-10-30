@@ -33,7 +33,8 @@ Imports:
     GPArotation,
     Rcpp,
     mgcv,
-    splines
+    splines,
+    vegan
 Suggests:
     boot,
     latticeExtra,

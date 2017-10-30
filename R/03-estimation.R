@@ -304,9 +304,41 @@ ESTIMATION <- function(data, model, group, itemtype = NULL, guess = 0, upper = 1
     }
     PrepList <- UpdatePrior(PrepList, model, groupNames=Data$groupNames)
     if(GenRandomPars){
-        for(g in seq_len(Data$ngroups))
-            for(i in seq_len(length(PrepList[[g]]$pars)))
-                PrepList[[g]]$pars[[i]] <- GenRandomPars(PrepList[[g]]$pars[[i]])
+        ### TODO Refactor this code into ggum method
+        if (itemtype == "ggum") {
+
+            D <- PrepList[[g]]$pars[[i]]@nfact
+            C <- PrepList[[g]]$pars[[i]]@ncat - 1
+            I <- Data$nitems
+            dca <- decorana(resp)
+            a <- as.list(summary(dca, digits=5, origin=TRUE,
+                                 display=c("species")))
+            data.dca <- as.data.frame(a$spec.scores)
+            dca.mat <- as.matrix(data.dca[,1:D])
+            start.values <- matrix(0,I,(2*D+C))
+
+            for (i in 1:I) {
+
+                dca.dist <- 0
+                for (d in 1:D) {
+                    start.values[i,d] <- 1   #alphas
+                    start.values[i,(D+d)] <- dca.mat[i,d]   #deltas
+                    dca.dist <- dca.mat[i,d]^2 + dca.dist
+                }
+
+                for (k in 1:C) {
+                    origin=1.002+.449*sqrt(dca.dist) - .093*ncats
+                    delta=.921+.058*sqrt(dca.dist) - .129*ncats
+                    start.values[i,(2*D+k)] <- origin + delta*(C-k) #taus
+                }
+                par <- start.values[i,]
+                PrepList[[g]]$pars[[i]]@par[PrepList[[g]]$pars[[i]]@est] <- par[PrepList[[g]]$pars[[i]]@est]
+            }
+        } else {
+            for(g in seq_len(Data$ngroups))
+                for(i in seq_len(length(PrepList[[g]]$pars)))
+                    PrepList[[g]]$pars[[i]] <- GenRandomPars(PrepList[[g]]$pars[[i]])
+            }
     }
     if(discrete){
         PrepList[[1L]]$exploratory <- FALSE
